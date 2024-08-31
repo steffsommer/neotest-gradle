@@ -92,7 +92,8 @@ local function get_test_filter_arguments(tree, position)
     local namespaces = get_namespaces_of_tree(tree)
 
     for _, namespace in pairs(namespaces) do
-      vim.list_extend(arguments, { '--tests', "'" .. namespace.id .. "'" })
+      local namespace_name = string.sub(namespace.id, 4)
+      vim.list_extend(arguments, { '--tests', "'" .. namespace_name .. "'" })
     end
   end
 
