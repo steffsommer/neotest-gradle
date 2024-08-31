@@ -13,13 +13,14 @@ local position_queries = require('neotest-gradle.position_queries')
 --- and construct test identifiers based on Java paths used during execution.
 ---
 --- @param path string - absolute file path
---- @return nil | table | table[] - see neotest.Tree
+--- @return neotest.Tree
 return function(path)
   local file_type = filetype.detect(path)
   local position_query = position_queries[file_type]
 
-  return lib.treesitter.parse_positions(path, position_query, {
+  local positions = lib.treesitter.parse_positions(path, position_query, {
     build_position = 'require("neotest-gradle.hooks.discover_positions.build_position")',
     position_id = 'require("neotest-gradle.hooks.discover_positions.build_position_identifier")',
   })
+  return positions
 end

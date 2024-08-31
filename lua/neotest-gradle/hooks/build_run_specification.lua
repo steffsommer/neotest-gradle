@@ -84,7 +84,10 @@ local function get_test_filter_arguments(tree, position)
   local arguments = {}
 
   if position.type == 'test' or position.type == 'namespace' then
-    vim.list_extend(arguments, { '--tests', "'" .. position.id .. "'" })
+    print(vim.inspect(position))
+    -- Treesitter ids start with "/*.", which needs to be stripped
+    local test_name = string.sub(position.id, 4)
+    vim.list_extend(arguments, { '--tests', "'" .. test_name .. "'" })
   elseif position.type == 'file' then
     local namespaces = get_namespaces_of_tree(tree)
 
@@ -103,9 +106,10 @@ end
 --- It also determines the folder where the resulsts will be reported to, to
 --- collect them later on. That folder path is saved to the context object.
 ---
---- @param arguments table - see neotest.RunArgs
---- @return nil | table | table[] - see neotest.RunSpec[]
+--- @param arguments neotest.RunArgs
+--- @return neotest.RunSpec[]
 return function(arguments)
+  -- print(vim.inspect(arguments))
   local position = arguments.tree:data()
   local project_directory = find_project_directory(position.path)
   local gradle_executable = get_gradle_executable(project_directory)
@@ -115,5 +119,9 @@ return function(arguments)
   local context = {}
   context.test_resuls_directory = get_test_results_directory(gradle_executable, project_directory)
 
+  local plain_cmd = table.concat(command, ' ')
+  print("plain cmd: " .. plain_cmd)
+
   return { command = table.concat(command, ' '), context = context }
+  -- return { command = '/home/steff/projects/gradle-monorepo/gradlew -p /home/steff/projects/gradle-monorepo ":app:test" --rerun', context = context}
 end

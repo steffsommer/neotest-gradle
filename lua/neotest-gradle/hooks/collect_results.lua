@@ -38,15 +38,18 @@ end
 --- result from the JUnit report XML. Therefore it parses the location from the
 --- node attributes and compares it with the position information in the tree.
 ---
---- @param tree table - see neotest.Tree
+--- @param tree neotest.Tree
 --- @param test_case_node table - XML node of test case result
---- @return table | nil - see neotest.Position
+--- @return neotest.Position
 local function find_position_for_test_case(tree, test_case_node)
-  local function_name = test_case_node._attr.name:gsub('%(%)', '')
-  local package_and_class = (test_case_node._attr.classname:gsub('%$', '%.'))
+  local xml_test_name = test_case_node._attr.name:gsub('%(%)', '')
+  local package_and_class = test_case_node._attr.classname:gsub('%$', '%.')
+  local fq_xml_test_name = package_and_class .. '.' .. xml_test_name
 
+  print('xml test name: ' .. xml_test_name)
   for _, position in tree:iter() do
-    if position.name == function_name and vim.startswith(position.id, package_and_class) then
+    local tree_sitter_class_and_test = string.sub(position.id, 4)
+    if string.match(fq_xml_test_name, tree_sitter_class_and_test .. '$') then
       return position
     end
   end
@@ -88,19 +91,24 @@ end
 --- It also tries to determine why and where a test possibly failed for
 --- additional Neotest features like diagnostics.
 ---
---- @param build_specfication table - see neotest.RunSpec
---- @param tree table - see neotest.Tree
+--- @param build_specfication neotest.RunSpec - see neotest.RunSpec
+--- @param tree neotest.Tree
 --- @return table<string, table> - see neotest.Result
 return function(build_specfication, _, tree)
   local results = {}
   local position = tree:data()
   local results_directory = build_specfication.context.test_resuls_directory
+  print('results directory: ' .. results_directory)
   local juris_reports = parse_xml_files_from_directory(results_directory)
+  print('juris reports: ')
+  print(vim.inspect(juris_reports))
 
   for _, juris_report in pairs(juris_reports) do
     for _, test_suite_node in pairs(asList(juris_report.testsuite)) do
       for _, test_case_node in pairs(asList(test_suite_node.testcase)) do
         local matched_position = find_position_for_test_case(tree, test_case_node)
+        print('matched position')
+        print(matched_position)
 
         if matched_position ~= nil then
           local failure_node = test_case_node.failure
